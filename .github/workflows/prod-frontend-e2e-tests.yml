@@ -1,0 +1,105 @@
+name: Production frontend E2E tests
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  prod-metamask-select-tests:
+    timeout-minutes: 10
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.OS }}-20.x-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-20.x-
+      - name: Install Playwright
+        run: |
+          yarn install --frozen-lockfile && npx playwright install --with-deps chromium
+      - name: Run Metamask Select Pair tests
+        env:
+          TEST_SEED: ${{ secrets.TEST_SEED }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+        run: |
+          npx playwright test polaris.metamask --retries=2
+      - name: upload metamask select test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: metamask-select-test-results
+          path: playwright-report
+
+  prod-phantom-tests:
+    timeout-minutes: 15
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.OS }}-20.x-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-20.x-
+      - name: Install Playwright
+        run: |
+          yarn install --frozen-lockfile && npx playwright install --with-deps chromium
+      - name: Run Select and Swap Pairs with Phantom tests
+        env:
+          TEST_SEED: ${{ secrets.TEST_SEED }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+        run: |
+          npx playwright test polaris.phantom swap.phantom --retries=2 --timeout 120000
+      - name: upload phantom test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phantom-test-results
+          path: playwright-report
+
+  prod-keplr-tests:
+    timeout-minutes: 15
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.OS }}-20.x-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+              ${{ runner.OS }}-20.x-
+      - name: Install Playwright
+        run: |
+            yarn install --frozen-lockfile && npx playwright install --with-deps chromium
+      - name: Run Select and Swap with Keplr tests
+        env:
+          TEST_SEED: ${{ secrets.TEST_SEED }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+        run: |
+          npx playwright test polaris.keplr prod.swap.keplr --timeout 120000
+      - name: upload keplr test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: keplr-test-results
+          path: playwright-report
