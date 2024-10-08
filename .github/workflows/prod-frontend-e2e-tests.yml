@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          repository: yury-dubinin/e2e-test
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
