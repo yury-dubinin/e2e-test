@@ -17,7 +17,7 @@ export class PolarisPage {
   readonly inputAmount: Locator
   readonly selectFromAssetBtn: Locator
   readonly selectToAssetBtn: Locator
-  readonly reviewTransferBtn: Locator
+  readonly reviewTradeBtn: Locator
   readonly reviewCancelBtn: Locator
   readonly reviewConfirmBtn: Locator
   readonly reviewSignBtn: Locator
@@ -36,13 +36,13 @@ export class PolarisPage {
     this.inputAmount = page.locator('//input[@name="fromAmount"]');
     this.selectFromAssetBtn = page.locator('//button[@data-testid="token-select-btn"]').first();
     this.selectToAssetBtn = page.locator('//button[@data-testid="token-select-btn"]').last();
-    this.reviewTransferBtn = page.getByText('Review Transfer')
+    this.reviewTradeBtn = page.locator('//button[@data-testid="review-trade"]')
     this.reviewCancelBtn = page.getByText('Cancel')
     this.reviewConfirmBtn = page.getByRole('button', { name: 'Confirm' })
     this.reviewSignBtn = page.getByRole('button', { name: 'Sign' })
     this.balanceBtn = page.locator('//button[@data-testid="total-balance-btn"]/span')
     this.doneSwapBtn = page.getByRole('button', {name: 'Done'})
-    this.searchAssetInput = page.getByPlaceholder('Search assets or networks')
+    this.searchAssetInput = page.getByPlaceholder('Search tokens or networks')
     this.noValidPlan = page.locator('//div//button[.="no valid plan found"]')
   }
 
@@ -53,9 +53,8 @@ export class PolarisPage {
   }
 
   async gotoLogin() {
-    const password = process.env.TEST_PASSWORD ?? 'password goes here'
     await this.page.goto('/')
-    await this.loginPasswordInput.fill(password)
+    await this.loginPasswordInput.fill('goingxchain')
     await this.loginBtn.click()
     await this.printUrl()
   }
@@ -167,74 +166,52 @@ export class PolarisPage {
     await this.selectFromAssetBtn.click()
     // we expect that after 1 second token filter is displayed.
     await this.page.waitForTimeout(1000)
-    const chainLocator = this.page
-      .locator("//button[@data-radix-collection-item]//span[.='" + chain + "']")
-      .last()
-    await chainLocator.click()
-    await this.searchAssetInput.fill(token, {timeout:4000})
-    const assetLoc = `//section//button//span[contains(@class, "text-text-secondary-alpha") and .="${token}"]`
-    const assetLocator = this.page.locator(assetLoc).first()
-    await assetLocator.click({timeout:4000})
-    await this.page.waitForTimeout(1000)
-    // there could be a number of similar tokens. i.e. '//div[@role="dialog"]//button//span[contains(text(), "USDC")]'
-    const isVisible = await this.page
-    .locator(`//div[@role="dialog"]//button//span[contains(text(), "${token}")]`).first().isVisible({timeout: 2000})
-    if(isVisible){
-      console.log("Multiple variants present.")
-      await this.page
-      .locator(`//div[@role="dialog"]//button//span[contains(text(), "${token}")]`).first().click({timeout: 2000})
-    }
+    await this.selectAsset(chain, token)
   }
-
-  async selectFromAssetById(chain: string, token: string) {
-    console.log(`Select Asset FROM chain: ${chain} token: ${token}`)
-    await this.selectFromAssetBtn.click()
-    // we expect that after 1 second token filter is displayed.
-    await this.page.waitForTimeout(1000)
-    const chainLocator = this.page
-      .locator("//button[@data-radix-collection-item]//span[.='" + chain + "']")
-      .last()
-    await chainLocator.click()
-    await this.searchAssetInput.fill(token.split(':')[0], {timeout:4000})
-    const assetLoc = `//section//button[@data-testid="${token}"]`
-    const assetLocator = this.page.locator(assetLoc)
-    await assetLocator.click({timeout:4000})
-    await this.page.waitForTimeout(1000)
-  }
-
 
   async selectToAsset(chain: string, token: string) {
     console.log(`Select Asset TO chain: ${chain} token: ${token}`)
     await this.selectToAssetBtn.click()
     // we expect that after 1 second token filter is displayed.
     await this.page.waitForTimeout(1000)
+    await this.selectAsset(chain, token)
+  }
+
+  private async selectAsset(chain: string, token: string){
+    console.log(`Select chain: ${chain}`)
     const chainLocator = this.page
-      .locator("//button[@data-radix-collection-item]//span[.='" + chain + "']")
-      .last()
-    await chainLocator.click()
+      .locator(`//div[@role="radiogroup"]//button[@data-radix-collection-item]//span[.="${chain}"]`)
+      .first()
+    await chainLocator.click({timeout:4000})
+    await this.page.waitForTimeout(500)
+    console.log(`Search for a token: ${token}`)
     await this.searchAssetInput.fill(token, {timeout: 4000})
-    const assetLoc = `//section//button//span[contains(@class, "text-text-secondary-alpha") and .="${token}"]`
+    const assetLoc = `//section//button//span[contains(@data-testid, "row") and .="${token}"]`
+    console.log(`Select a token: ${token}`)
     const assetLocator = this.page.locator(assetLoc).first()
     await assetLocator.click({timeout:4000})
     await this.page.waitForTimeout(1000)
-    // there could be a number of similar tokens. i.e. '//div[@role="dialog"]//button//span[contains(text(), "USDC")]'
+    // there could be a number of similar tokens.
+    const assetLoc2 = `//div[contains(@data-state, "open") and contains(@data-testid, "balances")]//button//span[contains(@data-testid, "row") and .="${token}"]`
     const isVisible = await this.page
-    .locator(`//div[@role="dialog"]//button//span[contains(text(), "${token}")]`).first().isVisible({timeout: 2000})
+    .locator(assetLoc2).last().isVisible({timeout: 2000})
     if(isVisible){
       console.log("Multiple variants present.")
       await this.page
-      .locator(`//div[@role="dialog"]//button//span[contains(text(), "${token}")]`).first().click({timeout: 2000})
+      .locator(assetLoc2).last().click({timeout: 2000})
+    } else{
+      console.log("Single variant present.")
     }
   }
 
-  async reviewTransfer() {
-    console.log('Review the transaction.')
-    console.log('Transaction page is opened at: ' + this.page.url())
+  async reviewTrade() {
+    console.log('Review the trade.')
+    console.log('Trade page is opened at: ' + this.page.url())
     await this.page.waitForTimeout(1000)
     try {
-      await this.reviewTransferBtn.click({timeout:20_000})
+      await this.reviewTradeBtn.click({timeout:20_000})
     } catch{
-      fail('Review Transfer Button is not present after 20 seconds!')
+      fail('Review Trade Button is not present after 20 seconds!')
     }
   }
 

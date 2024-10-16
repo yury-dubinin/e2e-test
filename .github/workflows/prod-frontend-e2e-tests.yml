@@ -42,7 +42,7 @@ jobs:
 
   prod-keplr-tests:
     timeout-minutes: 15
-    runs-on: macos-latest
+    runs-on: self-hosted
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
