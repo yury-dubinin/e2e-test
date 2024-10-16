@@ -1,6 +1,5 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import { type BrowserContext, chromium, expect, test } from '@playwright/test'
-import process from 'process'
 
 import { UnzipKeplrExtension } from '../unzip-extension'
 
@@ -10,7 +9,7 @@ import { TestConfig } from '../test-config'
 
 test.describe('Test Polaris Keplr select for a swap feature', () => {
   let context: BrowserContext
-  const testSeed = process.env.TEST_SEED ?? 'seed goes here'
+  const testSeed = process.env.TEST_SEED ?? "seed goes here";
   let tradePage: PolarisPage
 
   test.beforeAll(async () => {
@@ -30,7 +29,7 @@ test.describe('Test Polaris Keplr select for a swap feature', () => {
     // Switch to Application
     tradePage = new PolarisPage(context.pages()[0])
     await tradePage.gotoLogin()
-    await tradePage.connectKeplrWallet()
+    await tradePage.connectKeplrWallet(false)
   })
 
   test.afterAll(async () => {
@@ -48,9 +47,9 @@ test.describe('Test Polaris Keplr select for a swap feature', () => {
   test('User should be able to select Osmosis:OSMO to Osmosis:TIA and cancel', async () => {
     await tradePage.goto()
     await tradePage.enterAmount('0.5')
-    await tradePage.selectFromAsset('Osmosis', 'OSMO')
+    await tradePage.selectFromAsset('Osmosis', 'Osmosis')
     await tradePage.selectToAsset('Osmosis', 'TIA')
-    await tradePage.reviewTransfer()
+    await tradePage.reviewTrade()
     await tradePage.confirmChains('Osmosis', 'Osmosis')
     await tradePage.reviewCancel()
   })
@@ -58,19 +57,21 @@ test.describe('Test Polaris Keplr select for a swap feature', () => {
   test('User should be able to select Osmosis:OSMO to Osmosis:USDC and review', async () => {
     await tradePage.goto()
     await tradePage.enterAmount('0.5')
-    await tradePage.selectFromAsset('Osmosis', 'OSMO')
+    await tradePage.selectFromAsset('Osmosis', 'Osmosis')
     await tradePage.selectToAsset('Osmosis', 'USDC')
-    await tradePage.reviewTransfer()
+    await tradePage.reviewTrade()
     await tradePage.confirmChains('Osmosis', 'Osmosis')
+    await tradePage.reviewCancel();
   })
 
   test('User should be able to select Osmosis:OSMO to Celestia:TIA and review', async () => {
     await tradePage.goto()
     await tradePage.enterAmount('0.1')
-    await tradePage.selectFromAsset('Osmosis', 'OSMO')
+    await tradePage.selectFromAsset('Osmosis', 'Osmosis')
     await tradePage.selectToAsset('Celestia', 'TIA')
-    await tradePage.reviewTransfer()
+    await tradePage.reviewTrade()
     await tradePage.confirmChains('Osmosis', 'Celestia')
+    await tradePage.reviewCancel();
   })
 
   test('User should be able to select Osmosis:USDC to Noble:USDC and review', async () => {
@@ -78,7 +79,7 @@ test.describe('Test Polaris Keplr select for a swap feature', () => {
     await tradePage.enterAmount('0.15')
     await tradePage.selectFromAsset('Osmosis', 'USDC')
     await tradePage.selectToAsset('Noble', 'USDC')
-    await tradePage.reviewTransfer()
+    await tradePage.reviewTrade()
     await tradePage.confirmChains('Osmosis', 'Noble')
   })
 
@@ -87,7 +88,7 @@ test.describe('Test Polaris Keplr select for a swap feature', () => {
     await tradePage.enterAmount('0.15')
     await tradePage.selectFromAsset('Osmosis', 'USDC')
     await tradePage.selectToAsset('Cosmos Hub', 'USDC')
-    await tradePage.reviewTransfer()
+    await tradePage.reviewTrade()
     await tradePage.confirmChains('Osmosis', 'Cosmos Hub')
   })
 })
